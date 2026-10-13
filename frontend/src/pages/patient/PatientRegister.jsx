@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LoadingIndicator from '../../components/LoadingIndicator';
+import { apiUrl } from '../../api';
 import './PatientLogin.css';
 
 const PatientRegister = () => {
@@ -10,6 +12,8 @@ const PatientRegister = () => {
     password: '',
     phone: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const { name, email, password, phone } = formData;
 
@@ -19,8 +23,10 @@ const PatientRegister = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setIsSubmitting(true);
     try {
-      const response = await fetch('http://localhost:5000/api/patient/register', {
+      const response = await fetch(apiUrl('/api/patient/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,11 +42,13 @@ const PatientRegister = () => {
         localStorage.setItem('userPhone', data.phone);
         navigate('/patient/home');
       } else {
-        alert(data.message || 'Registration failed');
+        setError(data.message || 'Registration failed. Please check your details and try again.');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      alert('Registration failed. Please try again.');
+      setError('Unable to connect to the registration service. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -112,7 +120,10 @@ const PatientRegister = () => {
             />
           </div>
 
-          <button type="submit" className="login-button">Register</button>
+          {error && <p className="login-error" role="alert">{error}</p>}
+          <button type="submit" className="login-button" disabled={isSubmitting}>
+            {isSubmitting ? <LoadingIndicator label="Creating account..." /> : 'Register'}
+          </button>
         </form>
 
         <div className="login-footer">
